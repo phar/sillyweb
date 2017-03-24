@@ -1,0 +1,7 @@
+BINDADDRESS=0.0.0.0
+PORT=8080
+ADMIN=mdavis@ioactive.com
+SSL=0
+CERT=test.pem
+CERT_KEYFILE=test.pem
+LOGFILE=anyhost.prt.log
