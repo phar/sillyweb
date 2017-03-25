@@ -17,15 +17,12 @@ typedef struct server_t{
 	int loglevel;
 	int SSL;
 	
-	char	* logfilename;
-	int		 logfilefd;
 	
 	struct vhost_t *vhost_head;
 	
 	struct transport_t		*transport;	
 	
-	struct server_t *next_server;
-	
+	struct server_t *next_server;	
 }server_t;
 
 

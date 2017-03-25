@@ -3,11 +3,15 @@
 #include "common.h"
 //static struct client_t * clienthead = NULL;
 
+struct client_reputation{
+	struct sockaddr_in  addr;
+	int	resource_counter;
+	struct client_reputation * next_rep;
+};
 
 typedef struct client_t{
 	int active;
 	int thread_pool_id;
-	pthread_mutex_t mutex;
 	
 	int sock;
 	int flags;
@@ -23,11 +27,11 @@ typedef struct client_t{
 	char * uri;
 	char * uriclean;
 	char * query;
-	char * ipaddrstr;
-	unsigned short srcport;
-	char * hostnamestr;
 	char * filename;
 	char * path;
+	
+	char * ipaddrstr;
+	unsigned short srcport;
 	
 	int pump_fd;
 	int has_pump_fd;
@@ -46,7 +50,7 @@ typedef struct client_t{
 	
 	struct vhost_t  *vhost;
 	
-
+	struct client_reputation * rep;
 	struct server_t		*server;
 	struct client_t		*next_client;
 	struct transfer_t		*transfer;

@@ -27,7 +27,6 @@ int tcp_transport_close(struct client_t * client){
 
 
 
-
 int	ssl_transport_open(struct client_t * client,const char *desc){
 	client->sslctx = SSL_new(client->service->sslctx);
 	SSL_set_fd(client->sslctx, client->sock);

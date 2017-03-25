@@ -14,6 +14,27 @@
  
  ******************************/
 
+void add_new_client_rep_struct( struct client_reputation *newrep){
+struct client_reputation *ptr;
+	
+	if(SERVICE_DATA.rep_head != NULL){
+		for(ptr=SERVICE_DATA.rep_head; ptr->next_rep; ptr=ptr->next_rep);
+		ptr->next_rep = newrep;
+	}else{
+		SERVICE_DATA.rep_head = newrep;
+	}
+}
+
+
+void inc_client_rep_resource_counter(client_t *client){
+	
+}
+
+void dec_client_rep_resource_counter(client_t *client){
+	
+}
+
+
 
 void close_connect(client_t *client){
 	client->active = 0;
@@ -128,16 +149,16 @@ int create_new_client(int s, struct sockaddr_in * addr, struct server_t *server)
 
 
 void add_new_client_struct(client_t *newclient){
-	client_t *ptr;
-	//fixme mutex
-//	pthread_mutex_lock(&newclient->server->client_list_mutex);
+client_t *ptr;
+	
+	pthread_mutex_lock(&SERVICE_DATA.client_list_mutex);
 	if(SERVICE_DATA.clienthead != NULL){
 		for(ptr=SERVICE_DATA.clienthead; ptr->next_client; ptr=ptr->next_client);
 		ptr->next_client = newclient;
 	}else{
 		SERVICE_DATA.clienthead = newclient;
 	}
-//	pthread_mutex_unlock(&newclient->server->client_list_mutex);
+	pthread_mutex_unlock(&SERVICE_DATA.client_list_mutex);
 }
 
 
@@ -148,18 +169,18 @@ void del_client_struct(client_t *client){
 		if(client == SERVICE_DATA.clienthead){
 			SERVICE_DATA.clienthead = SERVICE_DATA.clienthead->next_client;
 		}else{
-//fixme			pthread_mutex_lock(&ServerCTX[0].client_list_mutex);
+			pthread_mutex_lock(&SERVICE_DATA.client_list_mutex);
 			
 			for(ptr=SERVICE_DATA.clienthead; ptr->next_client; ptr=ptr->next_client){
 				if(ptr == client){
 					prevptr->next_client = ptr->next_client;
-//					pthread_mutex_unlock(&ServerCTX[0].client_list_mutex);
+					pthread_mutex_unlock(&SERVICE_DATA.client_list_mutex);
 					return;
 				}
 				prevptr = ptr;
 			}
 			
-//			pthread_mutex_unlock(&ServerCTX[0].client_list_mutex);
+			pthread_mutex_unlock(&SERVICE_DATA.client_list_mutex);
 		}
 	}
 }

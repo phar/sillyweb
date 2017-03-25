@@ -8,88 +8,18 @@
 #include "config.h"
 #include "headers.h"
 #include "util.h"
+#include "http.h"
 
+
+#define MAX_OUTPUT_BUFFER_PUMP_LENGTH 4096
 
 
 #define SERVER_TYPE_LOCAL	1
 #define SERVER_TYPE_HTTP	0
 #define SERVER_TYPE_HTTPS	2
 
-#define DEFAULT_FILENAME  "index.html"
 #define DIR_SEP_CHR "/"
 
-
-#define CONNECTION_FLAG_LINE_ENDING_USES_CR	1
-#define CONNECTION_FLAG_HTTP_1_0			2
-#define CONNECTION_FLAG_HTTP_1_1			4
-#define CONNECTION_FLAG_CLOSE				8
-
-#define HTTP_VERSION_1_0	"1.0"
-#define HTTP_VERSION_1_1	"1.1"
-
-#define HTTP_RESULT_OK	200
-#define HTTP_RESULT_INTERNAL_SERVER_ERROR 500
-#define HTTP_RESULT_NOT_FOUND	404
-#define HTTP_RESULT_ACCEPTED 202
-#define HTTP_RESULT_NO_CONTENT	204
-#define HTTP_RESULT_BAD_REQUEST 400
-#define HTTP_RESULT_UNAUTHORIZED 401
-#define HTTP_RESULT_FORBIDDEN 403
-#define HTTP_RESULT_METHOD_NOT_ALLOWED 405
-#define HTTP_RESULT_NOT_ACCEPTED 406
-#define HTTP_RESULT_REQUEST_TIMEOUT 408
-#define HTTP_RESULT_URI_TOO_LONG 414
-#define HTTP_RESULT_NOT_IMPLEMENTED 501
-#define HTTP_RESULT_HTTP_VERSION_NOT_SUPPORTED 505
-
-
-typedef struct http_error_codes_t{
-	int	result_code;
-	char * result_string;
-}http_error_codes_t;
-
-http_error_codes_t HTTP_ERRORS[] = {
-	{HTTP_RESULT_OK							,"OK"},
-	{HTTP_RESULT_INTERNAL_SERVER_ERROR		,"some shit be broken, we're not good at technology"},
-	{HTTP_RESULT_NOT_FOUND					,"oh, you were searious about wanting that?"},
-	{HTTP_RESULT_ACCEPTED					,"sure, why not"},
-	{HTTP_RESULT_NO_CONTENT					,"wait.. i know i was thinking of something"},
-	{HTTP_RESULT_BAD_REQUEST				,"wait, that didnt make any sense"},
-	{HTTP_RESULT_UNAUTHORIZED				,".. no.."},
-	{HTTP_RESULT_FORBIDDEN					,".. fuck no.."},
-	{HTTP_RESULT_METHOD_NOT_ALLOWED			,"... uh.. nah."},
-	{HTTP_RESULT_NOT_ACCEPTED				,"nope"},
-	{HTTP_RESULT_REQUEST_TIMEOUT			,"...hey, bro.. its puff puff pass and your camping.."},
-	{HTTP_RESULT_URI_TOO_LONG				,".. you just sort of tailed off there without finishing your thought"},
-	{HTTP_RESULT_NOT_IMPLEMENTED			,"yeah I was feeling lazy and didnt do it yet"},
-	{HTTP_RESULT_HTTP_VERSION_NOT_SUPPORTED	,"woah.. you think this is some microsoft shit?"}
-};
-
-#define SERVER_VERSION_STRING "Stoned v.1 (something whitty)"
-
-
-
-ssize_t tcp_send(client_t * client,  void *buf, size_t length){
-	return send(client->sock, buf, length,0);
-}
-
-ssize_t tcp_recv(client_t * client, void *buf, size_t length){
-	return  recv(client->sock, buf, length,0);
-}
-
-int close_wrap(client_t * client){
-	
-	if(client->sock)
-		return close(client->sock);
-	else
-		return 0;
-}
-
-
-
-int close_wrap(client_t * client);
-ssize_t send_wrap(int fildes, const void *buf, size_t length);
-ssize_t recv_wrap(int fildes, const void *buf, size_t length);
 
 int null_request_handler(client_t *client);
 int get_request_handler(client_t *client);
@@ -112,7 +42,10 @@ int pump_write_client_fd(client_t *client);
 int pump_read_client_fd(client_t *client);
 void service_clients_thread(void * thread_pool_id);
 int pump_client_fd(client_t *client);
+int config_add_server_port(char * portfile, void * loadctx,void * varctx);
 
+int pump_fd_to_buffer(int fd, buffer_t * buffer);
+int pump_buffer_to_client(client_t * client);
 
 struct HTTP_Method{
 	char * method;
@@ -133,19 +66,9 @@ struct HTTP_Method METHOD_HANDLERS[] = {
 };
 
 
-void init_openssl(){
-	SSL_load_error_strings();
-	OpenSSL_add_ssl_algorithms();
-}
-
 void cleanup_openssl(){
 	EVP_cleanup();
 }
-
-
-int config_add_server_port(char * portfile, void * loadctx,void * varctx);
-
-
 
 
 int bind_server(struct server_t * ctx){
@@ -194,7 +117,7 @@ struct server_t *ptr;
 	
 	for(ptr=SERVICE_DATA.serverhead; ptr; ptr=ptr->next_server){
 		if(bind_server(ptr)<0){
-			llog((client_t *)NULL, LLOG_LOG_LEVEL_DEBUG,"server port bind failed");
+			llog((client_t *)ptr, LLOG_LOG_LEVEL_DEBUG,"server port bind failed");
 			return -1;
 		}
 	}
@@ -213,7 +136,9 @@ int s;
 	
 	memset(&SERVICE_DATA,0,sizeof(SERVICE_DATA));
 	
-	init_openssl();
+	OpenSSL_add_all_algorithms();
+	SSL_load_error_strings();
+	
 	s = pthread_attr_init(&attr);
 
 	if(!config_load_config("config/server.cfg")){
@@ -256,7 +181,6 @@ int s;
 
 
 void service_clients_thread(void * thread_pool_id){
-	
 	while(1){
 		service_clients((int)thread_pool_id);
 	}
@@ -321,14 +245,11 @@ int config_load_config(char * config){
 }
 
 
-
-
 int config_add_server_port(char * portfile, void * loadctx, void * varctx){
 struct service_data_header *ctx = loadctx;
 struct server_t *newserver;
 int ret;
 	
-
 	if((newserver = calloc(1,sizeof( server_t)))){
 		struct config_callback PORT_CONFIG[] = {
 			{"BINDADDRESS",config_set_string_handler,&newserver->bind_address},
@@ -337,21 +258,34 @@ int ret;
 			{NULL,NULL,NULL}};
 
 		llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,"parsing portfile \"%s\"",portfile);
-		ret = config_load_callbackable_config(portfile, PORT_CONFIG, newserver);
-
-		if(newserver->SSL){
-			newserver->transport = &SERVER_TRANSPORT_METHODS[1];
-		}else{
-			newserver->transport = &SERVER_TRANSPORT_METHODS[0]; 
+		if((ret = config_load_callbackable_config(portfile, PORT_CONFIG, newserver))){
+			if(newserver->SSL){
+				newserver->transport = &SERVER_TRANSPORT_METHODS[1];
+			}else{
+				newserver->transport = &SERVER_TRANSPORT_METHODS[0]; 
+			}
+			
+			if(newserver->SSL){
+				newserver->sslctx = SSL_CTX_new(SSLv3_server_method());
+			}
+			add_new_server_struct(newserver);
 		}
-		
-		add_new_server_struct(newserver);
 	}else{
 		ret = 0;
 	}
 	return ret;
 }
 
+
+static int sni_callback_handler(SSL *ssl, int *ad, void *arg){
+	
+	if (ssl == NULL)
+		return SSL_TLSEXT_ERR_NOACK;
+	
+	const char* servername = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+	
+	printf("ServerName: %s\n", servername);
+}
 
 
 int config_add_vhost(char * vhostfile, void * loadctx,void * varctx){
@@ -366,27 +300,61 @@ char * tpath;
 			{"HOSTNAME",config_set_string_handler,&newvhost->hostname},
 			{"WEBROOT",config_set_string_handler,&newvhost->document_root},
 			{"CGI_ROOT",config_set_string_handler,&newvhost->cgi_bin_root},
-			{NULL,NULL,NULL}};
+			{"LOGFILE",config_set_string_handler,&newvhost->logfilename},
+			{"SSL",config_set_int_handler,&newvhost->SSL},
+			{"CERT",config_set_string_handler,&newvhost->sslcert},
+			{"CERT_KEYFILE",config_set_string_handler,&newvhost->sslkey},
+		{NULL,NULL,NULL}};
+		
 		llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,"parsing vhost file \"%s\"",vhostfile);
-		ret = config_load_callbackable_config(vhostfile, VHOST_CONFIG, newvhost);
 		
-		if((tpath = realpath(newvhost->document_root,NULL)) == NULL){
-			ret = 0;
-			llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,"document root does not exist!");
-		}else{
-			free(newvhost->document_root);
-			newvhost->document_root = tpath;
-		}
+		if((ret = config_load_callbackable_config(vhostfile, VHOST_CONFIG, newvhost))){
+			
+			if((tpath = realpath(newvhost->document_root,NULL)) == NULL){
+				ret = 0;
+				llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,"document root does not exist!");
+			}else{
+				free(newvhost->document_root);
+				newvhost->document_root = tpath;
+			}
 
-		if((tpath = realpath(newvhost->cgi_bin_root,NULL)) == NULL){
-			ret = 0;
-			llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,"cgi-bin root does not exist!");
+			if((tpath = realpath(newvhost->cgi_bin_root,NULL)) == NULL){
+				ret = 0;
+				llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,"cgi-bin root does not exist!");
 
-		}else{
-			free(newvhost->cgi_bin_root);
-			newvhost->cgi_bin_root = tpath;
+			}else{
+				free(newvhost->cgi_bin_root);
+				newvhost->cgi_bin_root = tpath;
+			}
+			
+			if(newvhost->SSL){
+				llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,"loading SSL certificate");
+				newvhost->sslctx = SSL_CTX_new(SSLv3_server_method());
+				
+				if ( SSL_CTX_use_certificate_file(newvhost->sslctx, newvhost->sslcert, SSL_FILETYPE_PEM) <= 0 ){
+					ERR_print_errors_fp(stderr);
+					ret = 0;
+				}
+
+				if ( SSL_CTX_use_PrivateKey_file(newvhost->sslctx, newvhost->sslkey, SSL_FILETYPE_PEM) <= 0 ){
+					ERR_print_errors_fp(stderr);
+					ret = 0;
+				}
+
+				// verify private key
+				if ( !SSL_CTX_check_private_key(newvhost->sslctx)){
+					llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG, "Private key does not match the public certificate\n");
+					ret = 0;
+				}
+				
+				//setup SNI callback
+	//			if(!(SSL_CTX_set_tlsext_servername_callback(newvhost->sslctx, sni_callback_handler))){
+	//				ret = 0
+	//			}
+			}
 		}
 		
+
 		add_new_vhost_struct(newvhost);
 	}else{
 		ret = 0;
@@ -394,8 +362,6 @@ char * tpath;
 	return ret;
 		
 }
-
-
 
 
 int post_request_handler(client_t *client){
@@ -412,7 +378,7 @@ int f;
 	client_send_response_code(client);
 	client_send_headers(client);
 	
-	llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,client->uriclean);
+	llog((client_t *)client,LLOG_LOG_LEVEL_DEBUG,client->uriclean);
 	
 	client->response_complete = 1;
 	return 1;
@@ -431,7 +397,7 @@ int null_request_handler(client_t *client){
 void generate_dir_listing(client_t * client,char * dir){
 DIR *dp;
 struct dirent *ep;
-char * buffer[1024];
+char buffer[1024];
 struct stat path_stat;
 int l;
 char *residualpath;
@@ -445,44 +411,41 @@ char *residualpath;
 	add_header(&client->outbound_headers, "Content-type", "text/html");
 	append_buffer(client->outputbuffer,"<html>",6);
 	append_buffer(client->outputbuffer,"<body>",6);
-
-	l = sprintf(buffer,"<H1>Index of %s</h1><br>\n",residualpath);
-	append_buffer(client->outputbuffer,&buffer,l);
-
-
+	l = snprintf(&buffer,sizeof(buffer),"<H1>Index of %s</h1><br>\n",residualpath);
+	append_buffer(client->outputbuffer,buffer,l);
 	append_buffer(client->outputbuffer,"<tr colspan=3><hr></tr>\n",23);
-	l = sprintf(buffer,"<table><tr><td>Filename</td><td>Size</td><td>Last Modified</td></tr>\n",buffer);
-	append_buffer(client->outputbuffer,&buffer,l);
-	
+	l = snprintf(&buffer,sizeof(buffer),"<table><tr><td>Filename</td><td>Size</td><td>Last Modified</td></tr>\n");
+	append_buffer(client->outputbuffer,buffer,l);
+
 	dp = opendir (dir);
 	if (dp != NULL){
-	  while (ep = readdir (dp)){
+	  while ((ep = readdir (dp))){
 		  
-		  l = sprintf(buffer,"%s%s%s",dir, DIR_SEP_CHR, ep->d_name, ep->d_name);
+		  l = snprintf(&buffer,sizeof(buffer),"%s%s%s",dir, DIR_SEP_CHR, ep->d_name, ep->d_name);
 		  stat64(buffer, &path_stat);
 		  
 		  if(is_file(buffer)){
-			  l = sprintf(buffer,"\t<tr><td><a href=\"%s%s%s\">%s</a></td><td>%d</td><td>%s</td></tr>\n",residualpath,DIR_SEP_CHR, ep->d_name, ep->d_name, path_stat.st_size,sctime(path_stat.st_mtime));
+			  l = snprintf(&buffer,sizeof(buffer),"\t<tr><td><a href=\"%s%s%s\">%s</a></td><td>%d</td><td>%s</td></tr>\n",residualpath,DIR_SEP_CHR, ep->d_name, ep->d_name, path_stat.st_size,sctime(path_stat.st_mtime));
 		  }else{
-			  l = sprintf(buffer,"\t<tr><td><a href=\"%s%s%s\">%s</a</td><td></td><td>%s</td></tr>\n",residualpath,DIR_SEP_CHR, ep->d_name, ep->d_name,sctime(path_stat.st_mtime));
-			
+			  l = snprintf(&buffer,sizeof(buffer),"\t<tr><td><a href=\"%s%s%s\">%s</a</td><td></td><td>%s</td></tr>\n",residualpath,DIR_SEP_CHR, ep->d_name, ep->d_name,sctime(path_stat.st_mtime));
+		
 		  }
-		  append_buffer(client->outputbuffer,&buffer,l);
+		  append_buffer(client->outputbuffer,buffer,l);
 	  }
 	  (void) closedir (dp);
 	}else{
 	  
 	}
-	l = sprintf(buffer,"</table>\n",buffer);
-	append_buffer(client->outputbuffer,&buffer,l);
 	
-	l = sprintf(buffer,"%s Server at %s on port %d<br>\n",SERVER_VERSION_STRING ,client->vhost->hostname, client->server->port);
-	append_buffer(client->outputbuffer,&buffer,l);
+	l = snprintf(buffer,sizeof(buffer),"</table>\n",buffer);
+	append_buffer(client->outputbuffer,buffer,l);
+	
+	l = snprintf(&buffer,sizeof(buffer),"%s Server at %s on port %d<br>\n",SERVER_VERSION_STRING ,client->vhost->hostname, client->server->port);
+	append_buffer(client->outputbuffer,buffer,l);
 	append_buffer(client->outputbuffer,"</body>",7);
-
 	append_buffer(client->outputbuffer,"</html>",7);
-	
-	l = sprintf(buffer,"%d",client->outputbuffer->len);
+ 
+	l = snprintf(&buffer,sizeof(buffer),"%d",client->outputbuffer->len);
 	add_header(&client->outbound_headers, "Content-Length", buffer);
 	
 }
@@ -491,14 +454,16 @@ int dispatch_request(client_t *client){
 char *tmppath;
 char *abspath;
 char * subdir;
-char * buff;
 char **argp;
 int i;
 int forkfd[2];
+int pathlen;
+char buff[1024];
 	
-	llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,"dispatch");
-	tmppath = malloc(strlen(client->vhost->document_root)+strlen(client->uri) + strlen(DIR_SEP_CHR) + 1); //fixme
-	sprintf(tmppath, "%s%s%s",client->vhost->document_root,DIR_SEP_CHR,client->uri);
+	llog((client_t *)client,LLOG_LOG_LEVEL_DEBUG,"dispatch");
+	pathlen = strlen(client->vhost->document_root)+strlen(client->uri) + strlen(DIR_SEP_CHR) + 1;
+	tmppath = malloc(pathlen); //fixme
+	snprintf(tmppath,pathlen, "%s%s%s",client->vhost->document_root,DIR_SEP_CHR,client->uri);
 	client->uriclean = realpath(tmppath, NULL);
 	client->filename = basename(client->uriclean);
 	free(tmppath);
@@ -506,97 +471,93 @@ int forkfd[2];
 	
 
 	if(client->uriclean){
-		llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,"i am here10");
+		llog((client_t *)client,LLOG_LOG_LEVEL_DEBUG,"i am here10");
 		if(strstr(client->vhost->cgi_bin_root,client->uriclean) != NULL){//is cgi?
-			llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,"i am here3");
-
-			i  = 0;
-			buff = malloc(1024);
-			buff[1024] = 0;
+			llog((client_t *)client,LLOG_LOG_LEVEL_DEBUG,"i am here3");
 			
 			argp = malloc(128 * sizeof(char *));
 			
 //			DOCUMENT_ROOT	The root directory of your server
-			sprintf(buff,"DOCUMENT_ROOT=%1000s",client->vhost->document_root);
+			snprintf(buff,sizeof(buff),"DOCUMENT_ROOT=%s",client->vhost->document_root);
 			argp[i++] = strdup(buff);
 			
 //			HTTP_COOKIE	The visitor's cookie, if one is set
-			sprintf(buff,"HTTP_COOKIE=%1023s",get_header_value(&client->inbound_headers,"None","Cookie"));
+			snprintf(buff,sizeof(buff),"HTTP_COOKIE=%1023s",get_header_value(&client->inbound_headers,"None","Cookie"));
 			argp[i++] = strdup(buff);
 			
 //			HTTP_HOST	The hostname of the page being attempted
-			sprintf(buff,"HTTP_HOST=%1000s",client->vhost->hostname);
+			snprintf(buff,sizeof(buff),"HTTP_HOST=%s",client->vhost->hostname);
 			argp[i++] = strdup(buff);
 			
 //			HTTP_REFERER	The URL of the page that called your program
-			sprintf(buff,"HTTP_REFERER=%1000s",get_header_value(&client->inbound_headers,"None","Referer"));
+			snprintf(buff,sizeof(buff),"HTTP_REFERER=%s",get_header_value(&client->inbound_headers,"None","Referer"));
 			argp[i++] = strdup(buff);
 			
 //			HTTP_USER_AGENT	The browser type of the visitor
-			sprintf(buff,"HTTP_USER_AGENT=%1000s",get_header_value(&client->inbound_headers,"None","User-Agent"));
+			snprintf(buff,sizeof(buff),"HTTP_USER_AGENT=%s",get_header_value(&client->inbound_headers,"None","User-Agent"));
 			argp[i++] = strdup(buff);
 			
 //			HTTPS	"on" if the program is being called through a secure server
 			if(client->server->SSL)
-				sprintf(buff,"HTTPS=%1000s","on");
+				snprintf(buff,sizeof(buff),"HTTPS=%s","on");
 			else
-				sprintf(buff,"HTTPS=%1000s","off");
+				snprintf(buff,sizeof(buff),"HTTPS=%s","off");
 			argp[i++] = strdup(buff);
 			
 //			PATH	The system path your server is running under
-			sprintf(buff,"PATH=%1000s",client->vhost->document_root);
+			snprintf(buff,sizeof(buff),"PATH=%s",client->vhost->document_root);
 			argp[i++] = strdup(buff);
 			
 //			QUERY_STRING	The query string (see GET, below)
-			sprintf(buff,"QUERY_STRING=%1000s",client->query);
+			snprintf(buff,sizeof(buff),"QUERY_STRING=%s",client->query);
 			argp[i++] = strdup(buff);
 			
 //			REMOTE_ADDR	The IP address of the visitor
-			sprintf(buff,"REMOTE_ADDR=%1000s",client->ipaddrstr);
+			snprintf(buff,sizeof(buff),"REMOTE_ADDR=%s",client->ipaddrstr);
 			argp[i++] = strdup(buff);
 			
 //			REMOTE_HOST	The hostname of the visitor (if your server has reverse-name-lookups on; otherwise this is the IP address again)
-	//		sprintf(buff,"REMOTE_HOST=%1000s",);
+	//		snprintf(buff,sizeof(buff),"REMOTE_HOST=%s",);
 	//		argp[i++] = strdup(buff);
 			
 //			REMOTE_PORT	The port the visitor is connected to on the web server
-			sprintf(buff,"REMOTE_PORT=%d",client->srcport);
+			snprintf(buff,sizeof(buff),"REMOTE_PORT=%d",client->srcport);
 			argp[i++] = strdup(buff);
 			
 //			REMOTE_USER	The visitor's username (for .htaccess-protected pages)
-			sprintf(buff,"REMOTE_USER=%1000s","nobody");
+			snprintf(buff,sizeof(buff),"REMOTE_USER=%s","nobody");
 			argp[i++] = strdup(buff);
 			
 //			REQUEST_METHOD	GET or POST
-	//		sprintf(buff,"REQUEST_METHOD=%1000s",);
+	//		snprintf(buff,sizeof(buff),"REQUEST_METHOD=%s",);
 	//		argp[i++] = strdup(buff);
 			
 //			REQUEST_URI	The interpreted pathname of the requested document or CGI (relative to the document root)
-			sprintf(buff,"REQUEST_URI=%1000s",client->uriclean);
+			snprintf(buff,sizeof(buff),"REQUEST_URI=%s",client->uriclean);
 			argp[i++] = strdup(buff);
 			
 //			SCRIPT_FILENAME	The full pathname of the current CGI
-			sprintf(buff,"SCRIPT_FILENAME=%1000s",client->uriclean);
+			snprintf(buff,sizeof(buff),"SCRIPT_FILENAME=%s",client->uriclean);
 			argp[i++] = strdup(buff);
 			
 //			SCRIPT_NAME	The interpreted pathname of the current CGI (relative to the document root)
-			sprintf(buff,"SCRIPT_NAME=%1000s",client->filename);
+			snprintf(buff,sizeof(buff),"SCRIPT_NAME=%s",client->filename);
 			argp[i++] = strdup(buff);
 			
 //			SERVER_ADMIN	The email address for your server's webmaster
-			sprintf(buff,"SERVER_ADMIN=%1000s",client->vhost->admin_email);
+			snprintf(buff,sizeof(buff),"SERVER_ADMIN=%s",client->vhost->admin_email);
 			argp[i++] = strdup(buff);
 			
 //			SERVER_NAME	Your server's fully qualified domain name (e.g. www.cgi101.com)
-			sprintf(buff,"SERVER_NAME=%1000s",client->vhost->hostname);
+			snprintf(buff,sizeof(buff),"SERVER_NAME=%s",client->vhost->hostname);
 			argp[i++] = strdup(buff);
 			
 //			SERVER_PORT	The port number your server is listening on
-			sprintf(buff,"SERVER_PORT=%d",ntohs(client->server->addr.sin_port));
+			snprintf(buff,sizeof(buff),"SERVER_PORT=%d",ntohs(client->server->addr.sin_port));
 			argp[i++] = strdup(buff);
 			
 //			SERVER_SOFTWARE	The server software you're using (e.g. Apache 1.3)
-			sprintf(buff,"SERVER_SOFTWARE=%1000s",SERVER_VERSION_STRING);
+			snprintf(buff,sizeof(buff),"SERVER_SOFTWARE=%s",SERVER_VERSION_STRING);
 			argp[i++] = strdup(buff);
 			argp[i] = 0;
 			
@@ -616,7 +577,7 @@ int forkfd[2];
 				execle(client->uriclean,client->uriclean,client->filename,(char*) NULL,argp);
 			}
 		}else if(strstr(client->uriclean,client->vhost->document_root) != NULL){ //its a file
-			llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,"i am here");
+			llog((client_t *)client,LLOG_LOG_LEVEL_DEBUG,"i am here");
 			
 			printf("%s\n",client->uriclean);
 			if(is_file(client->uriclean) && client->transfer->open(client, client->uriclean)){
@@ -861,57 +822,45 @@ client_t *ptr;
 	}
 }
 
-#define MAX_OUTPUT_BUFFER_PUMP_LENGTH 4096
-
-int pump_buffer_to_fd(buffer_t * inbuffer, int fd){
-	return 0;
-	
-}
 
 
-int pump_read_client_fd(client_t *client){
+int pump_fd_to_buffer(int fd, buffer_t * buffer){
 int delta,l,s;
 char pump_buff[MAX_OUTPUT_BUFFER_PUMP_LENGTH];
 	
-	if(client->has_pump_fd){
-		llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,"pump");
-		if(client->outputbuffer->len < MAX_OUTPUT_BUFFER_PUMP_LENGTH){
-			if((delta = MAX_OUTPUT_BUFFER_PUMP_LENGTH - client->outputbuffer->len)){
-				if((l =  read(client->pump_fd,&pump_buff,delta))){
-					append_buffer(client->outputbuffer, pump_buff, l);
-				}else{
-					client->transfer->close(client);
-					return 0;
-				}
-			}
-			
-		}
-	return l;
-
-	}
-}
-
-int pump_write_client_fd(client_t *client){
-	int delta,l,s;
-	char pump_buff[MAX_OUTPUT_BUFFER_PUMP_LENGTH];
+//	llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,"pump");
 	
-	
-//	if(client->has_pump_fd){
-		if(client->outputbuffer->len){
-			if(client->outputbuffer->len >= MAX_OUTPUT_BUFFER_PUMP_LENGTH){
-				s = MAX_OUTPUT_BUFFER_PUMP_LENGTH;
+	if(buffer->len < MAX_OUTPUT_BUFFER_PUMP_LENGTH){
+		if((delta = MAX_OUTPUT_BUFFER_PUMP_LENGTH - buffer->len)){
+			if((l =  read(fd,&pump_buff,delta))){
+				append_buffer(buffer, pump_buff, l);
 			}else{
-				s = client->outputbuffer->len;
-			}
-
-			if((l =  client->server->transport->send(client,client->outputbuffer->buffer,s))){
-				ltrim_buffer(client->outputbuffer, l);
-			}else{
-				client->transfer->close(client);
 				return 0;
 			}
 		}
-//	}
+		
+	}
+	return l;
+}
+
+int pump_buffer_to_client(client_t * client){
+int delta,l,s;
+char pump_buff[MAX_OUTPUT_BUFFER_PUMP_LENGTH];
+	
+	if(client->outputbuffer->len){
+		if(client->outputbuffer->len >= MAX_OUTPUT_BUFFER_PUMP_LENGTH){
+			s = MAX_OUTPUT_BUFFER_PUMP_LENGTH;
+		}else{
+			s = client->outputbuffer->len;
+		}
+
+		if((l =  client->server->transport->send(client,client->outputbuffer->buffer,s))){
+			ltrim_buffer(client->outputbuffer, l);
+		}else{
+			//client->transfer->close(client);
+			return 0;
+		}
+	}
 	return l;
 }
 
@@ -951,31 +900,25 @@ int clients_need_service = 0;
 				for(ptr=SERVICE_DATA.clienthead,clientcount=0;ptr;ptr=ptr->next_client){
 					if(ptr->sock == clientfds[i].fd){
 						
-						if(pump_read_client_fd(ptr) == 0){
-							ptr->transfer->close(ptr);
-							if(ptr->flags &= CONNECTION_FLAG_HTTP_1_0){
-								ptr->active = 0;
-							}
-						}
 						
-						if(pump_write_client_fd(ptr) == 0){
+						if(pump_fd_to_buffer(ptr->pump_fd, ptr->outputbuffer) == 0){
 							ptr->transfer->close(ptr);
 							if(ptr->flags &= CONNECTION_FLAG_HTTP_1_0){
 								ptr->active = 0;
 							}
 						}
+
 						
 						if((clientfds[i].revents  & (POLLERR | POLLHUP |POLLNVAL)) > 0){
 							close_connect(ptr);
 							continue;
 							
 						}else if((clientfds[i].revents  & (POLLIN))>0){
-							//handle_client_read(ptr);
 							ptr->transfer->recv(ptr);
 							
 							if(is_client_request_complete(ptr)){
 								if((ptr->request_parsed == 1) && (parse_request(ptr) == HTTP_RESULT_OK)){
-									llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,"handle!");
+									llog((client_t *)ptr,LLOG_LOG_LEVEL_DEBUG,"handle!");
 									dispatch_request(ptr);
 								}else {
 									client_send_response_code(ptr);
@@ -995,7 +938,13 @@ int clients_need_service = 0;
 															continue;
 
 						}else if(((clientfds[i].revents & POLLOUT)) && (ptr->outputbuffer->len > 0)){
-//fixme								handle_client_write(ptr);
+								if(pump_buffer_to_client(ptr) == 0){
+									ptr->transfer->close(ptr);
+									if(ptr->flags &= CONNECTION_FLAG_HTTP_1_0){
+										ptr->active = 0;
+									}
+								}
+							
 								if((ptr->outputbuffer->len == 0) && (ptr->response_complete)){
 									if((ptr->flags & CONNECTION_FLAG_CLOSE)){
 										close_connect(ptr);

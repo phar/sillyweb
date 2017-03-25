@@ -8,11 +8,14 @@
 
 typedef struct service_data_t{
 	SSL_CTX			 * sslctx;
+	struct client_reputation *rep_head;
 	struct server_t * serverhead;
 	struct client_t * clienthead;
 	struct  vhost_t * vhost_head;
 	int servicesetuid;
 	int servicesetgid;
+	pthread_mutex_t client_list_mutex;
+	pthread_mutex_t server_list_mutex;
 }service_data_t;
 
 
