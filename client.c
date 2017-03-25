@@ -69,6 +69,8 @@ void clear_client(client_t *client){
 	client->request_parsed = 0;
 	client->response_complete = 0;
 	
+	client->client_connected = time(NULL);
+	
 	client->flags = 0;
 }
 
@@ -113,6 +115,7 @@ int create_new_client(int s, struct sockaddr_in * addr, struct server_t *server)
 		llog((client_t *)NULL, LLOG_LOG_LEVEL_DEBUG,"%d", newclient->transfer->send);
 		
 		
+		newclient->client_connected  = time(NULL);
 		newclient->srcport  = ntohs(addr->sin_port);
 		
 		add_new_client_struct(newclient);

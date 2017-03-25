@@ -281,7 +281,7 @@ struct server_t *ptr;
 			ufds[i].events = POLLIN | POLLPRI;
 		}
 		
-		pv = poll(ufds,cnt, 1);
+		pv = poll(ufds,cnt, 100);
 		if(pv > 0){
 			for(e=0;e<cnt;e++){
 				if(ufds[e].revents == POLLIN){
@@ -428,6 +428,64 @@ int null_request_handler(client_t *client){
 }
 
 
+void generate_dir_listing(client_t * client,char * dir){
+DIR *dp;
+struct dirent *ep;
+char * buffer[1024];
+struct stat path_stat;
+int l;
+char *residualpath;
+	
+	if((residualpath = strstr(dir, client->vhost->document_root))){
+		residualpath += strlen(client->vhost->document_root);
+	}else{
+		residualpath = dir;
+	}
+	
+	add_header(&client->outbound_headers, "Content-type", "text/html");
+	append_buffer(client->outputbuffer,"<html>",6);
+	append_buffer(client->outputbuffer,"<body>",6);
+
+	l = sprintf(buffer,"<H1>Index of %s</h1><br>\n",residualpath);
+	append_buffer(client->outputbuffer,&buffer,l);
+
+
+	append_buffer(client->outputbuffer,"<tr colspan=3><hr></tr>\n",23);
+	l = sprintf(buffer,"<table><tr><td>Filename</td><td>Size</td><td>Last Modified</td></tr>\n",buffer);
+	append_buffer(client->outputbuffer,&buffer,l);
+	
+	dp = opendir (dir);
+	if (dp != NULL){
+	  while (ep = readdir (dp)){
+		  
+		  l = sprintf(buffer,"%s%s%s",dir, DIR_SEP_CHR, ep->d_name, ep->d_name);
+		  stat64(buffer, &path_stat);
+		  
+		  if(is_file(buffer)){
+			  l = sprintf(buffer,"\t<tr><td><a href=\"%s%s%s\">%s</a></td><td>%d</td><td>%s</td></tr>\n",residualpath,DIR_SEP_CHR, ep->d_name, ep->d_name, path_stat.st_size,sctime(path_stat.st_mtime));
+		  }else{
+			  l = sprintf(buffer,"\t<tr><td><a href=\"%s%s%s\">%s</a</td><td></td><td>%s</td></tr>\n",residualpath,DIR_SEP_CHR, ep->d_name, ep->d_name,sctime(path_stat.st_mtime));
+			
+		  }
+		  append_buffer(client->outputbuffer,&buffer,l);
+	  }
+	  (void) closedir (dp);
+	}else{
+	  
+	}
+	l = sprintf(buffer,"</table>\n",buffer);
+	append_buffer(client->outputbuffer,&buffer,l);
+	
+	l = sprintf(buffer,"%s Server at %s on port %d<br>\n",SERVER_VERSION_STRING ,client->vhost->hostname, client->server->port);
+	append_buffer(client->outputbuffer,&buffer,l);
+	append_buffer(client->outputbuffer,"</body>",7);
+
+	append_buffer(client->outputbuffer,"</html>",7);
+	
+	l = sprintf(buffer,"%d",client->outputbuffer->len);
+	add_header(&client->outbound_headers, "Content-Length", buffer);
+	
+}
 
 int dispatch_request(client_t *client){
 char *tmppath;
@@ -439,9 +497,6 @@ int i;
 int forkfd[2];
 	
 	llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,"dispatch");
-
-	
-	printf("BOOOP %s\n",client->vhost->document_root);
 	tmppath = malloc(strlen(client->vhost->document_root)+strlen(client->uri) + strlen(DIR_SEP_CHR) + 1); //fixme
 	sprintf(tmppath, "%s%s%s",client->vhost->document_root,DIR_SEP_CHR,client->uri);
 	client->uriclean = realpath(tmppath, NULL);
@@ -563,21 +618,30 @@ int forkfd[2];
 		}else if(strstr(client->uriclean,client->vhost->document_root) != NULL){ //its a file
 			llog((client_t *)NULL,LLOG_LOG_LEVEL_DEBUG,"i am here");
 			
-			add_header(&client->outbound_headers, "Content-Type", get_mime_from_filename(client->filename));
-
 			printf("%s\n",client->uriclean);
-			if(client->transfer->open(client, client->uriclean)){
+			if(is_file(client->uriclean) && client->transfer->open(client, client->uriclean)){
+				add_header(&client->outbound_headers, "Content-Type", get_mime_from_filename(client->filename));
 				client->response_in_progress = 1;
 			}else{
-				client->result_code = HTTP_RESULT_NOT_FOUND;
-				client_send_response_code(client);
-				//any data appended to the payloiad is now the page
-				client->response_complete = 1;
+				if(is_dir(client->uriclean)){
+					client->result_code = HTTP_RESULT_OK;
+					client_send_response_code(client);
+					generate_dir_listing(client,client->uriclean);
+					client_send_headers(client);
+					client->response_complete = 1;
+				}else{
+					client->result_code = HTTP_RESULT_NOT_FOUND;
+					client_send_response_code(client);
+					client_send_headers(client);
+					//any data appended to the payloiad is now the page
+					client->response_complete = 1;
+				}
 			}
 			
 		}else{ //forbidden
 			client->result_code = HTTP_RESULT_FORBIDDEN;
 			client_send_response_code(client);
+			client_send_headers(client);
 			//any data appended to the payloiad is now the page
 			client->response_complete = 1;
 		}
@@ -585,6 +649,8 @@ int forkfd[2];
 	}else{
 		client->result_code = HTTP_RESULT_NOT_FOUND;
 		client_send_response_code(client);
+		client_send_headers(client);
+
 		//any data appended to the payloiad is now the page
 		client->response_complete = 1;
 	}
@@ -667,7 +733,7 @@ char * valuetoken,*nametoken,*valuetokenstr,*queryptr;
 	vhost_t *vhptr;
 	
 	add_header(&client->outbound_headers, "Server", SERVER_VERSION_STRING);
-	add_header(&client->outbound_headers, "Date", sctime());
+	add_header(&client->outbound_headers, "Date", sctime(NULL));
 
 	
 	if(client->flags & CONNECTION_FLAG_LINE_ENDING_USES_CR){
@@ -742,11 +808,11 @@ char * valuetoken,*nametoken,*valuetokenstr,*queryptr;
 				}
 				
 				
-				//if((client->flags & CONNECTION_FLAG_CLOSE) || (client->flags &= CONNECTION_FLAG_HTTP_1_0)){
+				if((client->flags & CONNECTION_FLAG_CLOSE) || (client->flags &= CONNECTION_FLAG_HTTP_1_0)){
 					add_header(&client->outbound_headers, "Connection","close");
-				//}else{
-				//	add_header(&client->outbound_headers, "Connection","Keep-Alive");
-				//}
+				}else{
+					add_header(&client->outbound_headers, "Connection","Keep-Alive");
+				}
 				
 				
 				vhoststr = get_header_value(&client->inbound_headers,NULL,"Host");
@@ -820,6 +886,8 @@ char pump_buff[MAX_OUTPUT_BUFFER_PUMP_LENGTH];
 			}
 			
 		}
+	return l;
+
 	}
 }
 
@@ -828,7 +896,7 @@ int pump_write_client_fd(client_t *client){
 	char pump_buff[MAX_OUTPUT_BUFFER_PUMP_LENGTH];
 	
 	
-	if(client->has_pump_fd){
+//	if(client->has_pump_fd){
 		if(client->outputbuffer->len){
 			if(client->outputbuffer->len >= MAX_OUTPUT_BUFFER_PUMP_LENGTH){
 				s = MAX_OUTPUT_BUFFER_PUMP_LENGTH;
@@ -843,7 +911,7 @@ int pump_write_client_fd(client_t *client){
 				return 0;
 			}
 		}
-	}
+//	}
 	return l;
 }
 
@@ -878,7 +946,7 @@ int clients_need_service = 0;
 	
 	//painted into corner
 	if(clientcount){
-		if((clients_need_service = poll(clientfds, clientcount, 0)) > 0){
+		if((clients_need_service = poll(clientfds, clientcount, 100)) > 0){
 			for(i=0;i<clientcount;i++){
 				for(ptr=SERVICE_DATA.clienthead,clientcount=0;ptr;ptr=ptr->next_client){
 					if(ptr->sock == clientfds[i].fd){
@@ -916,11 +984,15 @@ int clients_need_service = 0;
 									ptr->response_complete = 1;
 									ptr->request_parsed = 1;
 								}
-								
-								
+							}else if((ptr->client_connected + 10)  < time(NULL)){
+								ptr->result_code = HTTP_RESULT_BAD_REQUEST;
+								client_send_response_code(ptr);
+								client_send_headers(ptr);
+								//any data appended to the payloiad is now the page
+								ptr->response_complete = 1;
+								ptr->request_parsed = 1;
 							}
-								
-							continue;
+															continue;
 
 						}else if(((clientfds[i].revents & POLLOUT)) && (ptr->outputbuffer->len > 0)){
 //fixme								handle_client_write(ptr);

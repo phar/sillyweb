@@ -23,6 +23,8 @@
 #include <openssl/err.h>
 #include <string.h>
 #include <libgen.h>
+#include <dirent.h>
+#include <sys/stat.h>
 
 #define NETWORK_BLOCK_SIZE 512
 

@@ -54,6 +54,8 @@ typedef struct client_t{
 	
 	SSL		*sslctx;
 	
+	time_t client_connected;
+	
 }client_t;
 #include "transport.h"
 #include "transfer.h"
