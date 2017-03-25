@@ -1,0 +1,357 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		67CC55CF1E7F1FA400984BB4 /* buffer.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC55B81E7F1FA400984BB4 /* buffer.c */; };
+		67CC55D01E7F1FA400984BB4 /* client.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC55BB1E7F1FA400984BB4 /* client.c */; };
+		67CC55D11E7F1FA400984BB4 /* headers.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC55BF1E7F1FA400984BB4 /* headers.c */; };
+		67CC55D21E7F1FA400984BB4 /* log.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC55C61E7F1FA400984BB4 /* log.c */; };
+		67CC55D31E7F1FA400984BB4 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC55C91E7F1FA400984BB4 /* main.c */; };
+		67CC55D41E7F1FA400984BB4 /* server.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC55CB1E7F1FA400984BB4 /* server.c */; };
+		67CC55D91E7F223800984BB4 /* config.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC55D71E7F223800984BB4 /* config.c */; };
+		67CC55DC1E7F3C4000984BB4 /* vhost.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC55DB1E7F3C4000984BB4 /* vhost.c */; };
+		67CC55E11E7F977E00984BB4 /* transfer.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC55DD1E7F977E00984BB4 /* transfer.c */; };
+		67CC55E21E7F977E00984BB4 /* transport.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC55DF1E7F977E00984BB4 /* transport.c */; };
+		67CC55E41E81CFF800984BB4 /* service.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC55E31E81CFF800984BB4 /* service.c */; };
+		67CC55E61E84529000984BB4 /* percent.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC55E51E84529000984BB4 /* percent.c */; };
+		67CC55EA1E845A9000984BB4 /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC55E81E845A9000984BB4 /* util.c */; };
+		67CC55EC1E85AD5A00984BB4 /* mime.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC55EB1E85AD5A00984BB4 /* mime.c */; };
+		67CC55EF1E862D8000984BB4 /* http.c in Sources */ = {isa = PBXBuildFile; fileRef = 67CC55ED1E862D8000984BB4 /* http.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		67CC55AC1E7F1F6300984BB4 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		67CC55AE1E7F1F6300984BB4 /* webserver */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = webserver; sourceTree = BUILT_PRODUCTS_DIR; };
+		67CC55B81E7F1FA400984BB4 /* buffer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = buffer.c; path = ../../buffer.c; sourceTree = "<group>"; };
+		67CC55B91E7F1FA400984BB4 /* buffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = buffer.h; path = ../../buffer.h; sourceTree = "<group>"; };
+		67CC55BA1E7F1FA400984BB4 /* buildmac.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; name = buildmac.sh; path = ../../buildmac.sh; sourceTree = "<group>"; };
+		67CC55BB1E7F1FA400984BB4 /* client.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = client.c; path = ../../client.c; sourceTree = "<group>"; };
+		67CC55BC1E7F1FA400984BB4 /* client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = client.h; path = ../../client.h; sourceTree = "<group>"; };
+		67CC55BD1E7F1FA400984BB4 /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = common.h; path = ../../common.h; sourceTree = "<group>"; };
+		67CC55BF1E7F1FA400984BB4 /* headers.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = headers.c; path = ../../headers.c; sourceTree = "<group>"; };
+		67CC55C01E7F1FA400984BB4 /* headers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = headers.h; path = ../../headers.h; sourceTree = "<group>"; };
+		67CC55C61E7F1FA400984BB4 /* log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = log.c; path = ../../log.c; sourceTree = "<group>"; };
+		67CC55C71E7F1FA400984BB4 /* log.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = log.h; path = ../../log.h; sourceTree = "<group>"; };
+		67CC55C91E7F1FA400984BB4 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = ../../main.c; sourceTree = "<group>"; };
+		67CC55CA1E7F1FA400984BB4 /* mime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mime.h; path = ../../mime.h; sourceTree = "<group>"; };
+		67CC55CB1E7F1FA400984BB4 /* server.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = server.c; path = ../../server.c; sourceTree = "<group>"; };
+		67CC55CC1E7F1FA400984BB4 /* server.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = server.h; path = ../../server.h; sourceTree = "<group>"; };
+		67CC55CE1E7F1FA400984BB4 /* service.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = service.h; path = ../../service.h; sourceTree = "<group>"; };
+		67CC55D71E7F223800984BB4 /* config.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = config.c; path = ../../config.c; sourceTree = "<group>"; };
+		67CC55D81E7F223800984BB4 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../../config.h; sourceTree = "<group>"; };
+		67CC55DA1E7F261E00984BB4 /* vhost.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = vhost.h; path = ../../vhost.h; sourceTree = "<group>"; };
+		67CC55DB1E7F3C4000984BB4 /* vhost.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vhost.c; path = ../../vhost.c; sourceTree = "<group>"; };
+		67CC55DD1E7F977E00984BB4 /* transfer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = transfer.c; path = ../../transfer.c; sourceTree = "<group>"; };
+		67CC55DE1E7F977E00984BB4 /* transfer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = transfer.h; path = ../../transfer.h; sourceTree = "<group>"; };
+		67CC55DF1E7F977E00984BB4 /* transport.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = transport.c; path = ../../transport.c; sourceTree = "<group>"; };
+		67CC55E01E7F977E00984BB4 /* transport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = transport.h; path = ../../transport.h; sourceTree = "<group>"; };
+		67CC55E31E81CFF800984BB4 /* service.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = service.c; path = ../../service.c; sourceTree = "<group>"; };
+		67CC55E51E84529000984BB4 /* percent.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = percent.c; path = ../../percent.c; sourceTree = "<group>"; };
+		67CC55E71E8452A600984BB4 /* percent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = percent.h; path = ../../percent.h; sourceTree = "<group>"; };
+		67CC55E81E845A9000984BB4 /* util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = util.c; path = ../../util.c; sourceTree = "<group>"; };
+		67CC55E91E845A9000984BB4 /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = util.h; path = ../../util.h; sourceTree = "<group>"; };
+		67CC55EB1E85AD5A00984BB4 /* mime.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mime.c; path = ../../mime.c; sourceTree = "<group>"; };
+		67CC55ED1E862D8000984BB4 /* http.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = http.c; path = ../../http.c; sourceTree = "<group>"; };
+		67CC55EE1E862D8000984BB4 /* http.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = http.h; path = ../../http.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		67CC55AB1E7F1F6300984BB4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		67CC55A51E7F1F6300984BB4 = {
+			isa = PBXGroup;
+			children = (
+				67CC55B01E7F1F6300984BB4 /* webserver */,
+				67CC55AF1E7F1F6300984BB4 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		67CC55AF1E7F1F6300984BB4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				67CC55AE1E7F1F6300984BB4 /* webserver */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		67CC55B01E7F1F6300984BB4 /* webserver */ = {
+			isa = PBXGroup;
+			children = (
+				67CC55BA1E7F1FA400984BB4 /* buildmac.sh */,
+				67CC55D61E7F1FCC00984BB4 /* Source */,
+				67CC55D51E7F1FC100984BB4 /* headers */,
+			);
+			path = webserver;
+			sourceTree = "<group>";
+		};
+		67CC55D51E7F1FC100984BB4 /* headers */ = {
+			isa = PBXGroup;
+			children = (
+				67CC55E91E845A9000984BB4 /* util.h */,
+				67CC55EE1E862D8000984BB4 /* http.h */,
+				67CC55E71E8452A600984BB4 /* percent.h */,
+				67CC55DE1E7F977E00984BB4 /* transfer.h */,
+				67CC55E01E7F977E00984BB4 /* transport.h */,
+				67CC55DA1E7F261E00984BB4 /* vhost.h */,
+				67CC55D81E7F223800984BB4 /* config.h */,
+				67CC55B91E7F1FA400984BB4 /* buffer.h */,
+				67CC55BC1E7F1FA400984BB4 /* client.h */,
+				67CC55BD1E7F1FA400984BB4 /* common.h */,
+				67CC55C01E7F1FA400984BB4 /* headers.h */,
+				67CC55C71E7F1FA400984BB4 /* log.h */,
+				67CC55CA1E7F1FA400984BB4 /* mime.h */,
+				67CC55CC1E7F1FA400984BB4 /* server.h */,
+				67CC55CE1E7F1FA400984BB4 /* service.h */,
+			);
+			name = headers;
+			sourceTree = "<group>";
+		};
+		67CC55D61E7F1FCC00984BB4 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				67CC55DB1E7F3C4000984BB4 /* vhost.c */,
+				67CC55B81E7F1FA400984BB4 /* buffer.c */,
+				67CC55BB1E7F1FA400984BB4 /* client.c */,
+				67CC55BF1E7F1FA400984BB4 /* headers.c */,
+				67CC55C61E7F1FA400984BB4 /* log.c */,
+				67CC55C91E7F1FA400984BB4 /* main.c */,
+				67CC55D71E7F223800984BB4 /* config.c */,
+				67CC55CB1E7F1FA400984BB4 /* server.c */,
+				67CC55E81E845A9000984BB4 /* util.c */,
+				67CC55E31E81CFF800984BB4 /* service.c */,
+				67CC55EB1E85AD5A00984BB4 /* mime.c */,
+				67CC55DF1E7F977E00984BB4 /* transport.c */,
+				67CC55DD1E7F977E00984BB4 /* transfer.c */,
+				67CC55E51E84529000984BB4 /* percent.c */,
+				67CC55ED1E862D8000984BB4 /* http.c */,
+			);
+			name = Source;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		67CC55AD1E7F1F6300984BB4 /* webserver */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 67CC55B51E7F1F6300984BB4 /* Build configuration list for PBXNativeTarget "webserver" */;
+			buildPhases = (
+				67CC55AA1E7F1F6300984BB4 /* Sources */,
+				67CC55AB1E7F1F6300984BB4 /* Frameworks */,
+				67CC55AC1E7F1F6300984BB4 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = webserver;
+			productName = webserver;
+			productReference = 67CC55AE1E7F1F6300984BB4 /* webserver */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		67CC55A61E7F1F6300984BB4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0820;
+				ORGANIZATIONNAME = phar;
+				TargetAttributes = {
+					67CC55AD1E7F1F6300984BB4 = {
+						CreatedOnToolsVersion = 8.2.1;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 67CC55A91E7F1F6300984BB4 /* Build configuration list for PBXProject "webserver" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 67CC55A51E7F1F6300984BB4;
+			productRefGroup = 67CC55AF1E7F1F6300984BB4 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				67CC55AD1E7F1F6300984BB4 /* webserver */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		67CC55AA1E7F1F6300984BB4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				67CC55EA1E845A9000984BB4 /* util.c in Sources */,
+				67CC55E41E81CFF800984BB4 /* service.c in Sources */,
+				67CC55D31E7F1FA400984BB4 /* main.c in Sources */,
+				67CC55D21E7F1FA400984BB4 /* log.c in Sources */,
+				67CC55D91E7F223800984BB4 /* config.c in Sources */,
+				67CC55EF1E862D8000984BB4 /* http.c in Sources */,
+				67CC55D01E7F1FA400984BB4 /* client.c in Sources */,
+				67CC55DC1E7F3C4000984BB4 /* vhost.c in Sources */,
+				67CC55EC1E85AD5A00984BB4 /* mime.c in Sources */,
+				67CC55D11E7F1FA400984BB4 /* headers.c in Sources */,
+				67CC55D41E7F1FA400984BB4 /* server.c in Sources */,
+				67CC55E11E7F977E00984BB4 /* transfer.c in Sources */,
+				67CC55CF1E7F1FA400984BB4 /* buffer.c in Sources */,
+				67CC55E21E7F977E00984BB4 /* transport.c in Sources */,
+				67CC55E61E84529000984BB4 /* percent.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		67CC55B31E7F1F6300984BB4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		67CC55B41E7F1F6300984BB4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		67CC55B61E7F1F6300984BB4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		67CC55B71E7F1F6300984BB4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		67CC55A91E7F1F6300984BB4 /* Build configuration list for PBXProject "webserver" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				67CC55B31E7F1F6300984BB4 /* Debug */,
+				67CC55B41E7F1F6300984BB4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		67CC55B51E7F1F6300984BB4 /* Build configuration list for PBXNativeTarget "webserver" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				67CC55B61E7F1F6300984BB4 /* Debug */,
+				67CC55B71E7F1F6300984BB4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 67CC55A61E7F1F6300984BB4 /* Project object */;
+}

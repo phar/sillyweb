@@ -7,5 +7,5 @@ const char *get_file_ext(const char *file);
 int is_dir(const char *path);
 int is_file(const char *path);
 
-
+char * trim_whitespace(char * str);
 #endif

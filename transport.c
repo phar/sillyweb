@@ -30,7 +30,8 @@ int tcp_transport_close(struct client_t * client){
 int	ssl_transport_open(struct client_t * client,const char *desc){
 	client->sslctx = SSL_new(client->service->sslctx);
 	SSL_set_fd(client->sslctx, client->sock);
-	return 0;
+//	ssl_err = SSL_accept(cSSL);
+	return client->sock;
 }
 
 ssize_t ssl_transport_send(struct client_t * client,  void *buffer, size_t length){

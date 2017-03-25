@@ -23,16 +23,39 @@ char t;
 }
 
 
-int percent_encode(char *in, char * out){
+char * percent_encode(char *in){
 int ll,i;
 char cbuff[10];
+char * outbuf;
 
 	ll = strlen(in);
-        for(i=0;i<ll;i++){
-		sprintf(cbuff, "%%%02x",in[i]);
-		strcat(out,cbuff);
+	if((outbuf = malloc(ll * 3))){
+		outbuf[0] = 0;
+		for(i=0;i<ll;i++){
+			sprintf(cbuff, "%%%02x",in[i]);
+			strcat(outbuf,cbuff);
+		}
+		return outbuf;
 	}
-	return ll * 3;
+	return NULL;
 
+}
+
+char * html_encode(char *in){
+int ll,i;
+char * outbuf;
+char cbuff[10];
+	
+	ll = strlen(in);
+	if((outbuf = malloc(ll * 4))){
+		outbuf[0] = 0;
+		for(i=0;i<ll;i++){
+			sprintf(cbuff, "&#%02x",in[i]);
+			strcat(outbuf,cbuff);
+		}
+		return outbuf;
+	}
+	return NULL;
+	
 }
 

@@ -22,34 +22,36 @@ typedef struct client_t{
 	struct header_t * inbound_headers;
 	struct header_t * outbound_headers;
 	
-	int method_id;
-	
 	char * uri;
 	char * uriclean;
 	char * query;
+	char * localpath;
+	char * cleanlocalpath;
+	char * webpath;
 	char * filename;
 	char * path;
+	char * hostnamestr;
 	
 	char * ipaddrstr;
 	unsigned short srcport;
 	
 	int pump_fd;
-	int has_pump_fd;
 	
 	int client_id;
 	
 	int request_complete;
-	
+	int is_cgi_request;
 	int response_complete;
 	int response_in_progress;
 	int request_parsed;
-	int transfer_complete;
 	int transfer_in_progress;
+	int transfer_completed;
 	int	result_code;
 	//int transfer_chunked_encoding;
 	
 	struct vhost_t  *vhost;
 	
+	struct HTTP_Method	*method;
 	struct client_reputation * rep;
 	struct server_t		*server;
 	struct client_t		*next_client;

@@ -74,10 +74,10 @@ void clear_client(client_t *client){
 		client->query = NULL;
 	}
 	
-	if(client->has_pump_fd)
+	if(client->pump_fd)
 		close(client->pump_fd);
 	
-	client->has_pump_fd = 0;
+	client->pump_fd = 0;
 	free_buffer(client->outputbuffer);
 	
 	free_buffer(client->inputbuffer);
@@ -112,34 +112,28 @@ int create_new_client(int s, struct sockaddr_in * addr, struct server_t *server)
 		newclient->inputbuffer = new_buffer();
 		newclient->outputbuffer = new_buffer();
 
-		/*
 		 switch(addr->sin_family) {
 			case AF_INET:
 				inet_ntop(AF_INET, &(((struct sockaddr_in *)addr)->sin_addr), &ip_addr_buffer, INET_ADDRSTRLEN);
-				he = gethostbyaddr(addr,INET_ADDRSTRLEN, AF_INET6);
-				newclient->hostnamestr = strdup(he->h_name);
 				break;
 		 
 			case AF_INET6:
 				inet_ntop(AF_INET6, &(((struct sockaddr_in6 *)addr)->sin6_addr), &ip_addr_buffer, INET6_ADDRSTRLEN);
-				he = gethostbyaddr(addr, INET6_ADDRSTRLEN, AF_INET);
-				newclient->hostnamestr = strdup(he->h_name);
 				break;
 		 
 		 }
-		 */
+ 
 		newclient->ipaddrstr = strdup(ip_addr_buffer);
 		
 		newclient->transfer = &SERVER_TRANSFER_METHODS[0]; //FIXME
 		newclient->vhost = SERVICE_DATA.vhost_head;
-		
-		llog((client_t *)NULL, LLOG_LOG_LEVEL_DEBUG,"%d", newclient->transfer->send);
-		
-		
+
 		newclient->client_connected  = time(NULL);
 		newclient->srcport  = ntohs(addr->sin_port);
-		
+ 
 		add_new_client_struct(newclient);
+		inc_client_rep_resource_counter(newclient);
+ 
 		return 1;
 	}else{
 		llog((client_t *)NULL, LLOG_LOG_LEVEL_DEBUG,"MEMORY ALLOCATION FAILURE");
@@ -173,6 +167,7 @@ void del_client_struct(client_t *client){
 			
 			for(ptr=SERVICE_DATA.clienthead; ptr->next_client; ptr=ptr->next_client){
 				if(ptr == client){
+					dec_client_rep_resource_counter(ptr);
 					prevptr->next_client = ptr->next_client;
 					pthread_mutex_unlock(&SERVICE_DATA.client_list_mutex);
 					return;

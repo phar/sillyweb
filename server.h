@@ -17,7 +17,7 @@ typedef struct server_t{
 	int loglevel;
 	int SSL;
 	
-	
+	SSL_CTX * sslctx;
 	struct vhost_t *vhost_head;
 	
 	struct transport_t		*transport;	

@@ -13,13 +13,12 @@ void new_headers(header_t **head){
 }
 
 void add_header(header_t **head, char * name, char * value){
-	header_t *ptr,*newptr;
-	header_t *inptr;
+header_t *ptr,*newptr;
+header_t *inptr;
 	
 	inptr = *head;
-	
 	if((newptr = calloc(1,sizeof(header_t)))){
-		newptr->header_name = strdup(name);
+		newptr->header_name =  strdup(name);
 		newptr->header_value = strdup(value);
 		
 		if(inptr != NULL){

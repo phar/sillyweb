@@ -11,8 +11,8 @@ server_t *ptr;
 	}else{
 		pthread_mutex_lock(&SERVICE_DATA.server_list_mutex);
 		SERVICE_DATA.serverhead = newserver;
-		pthread_mutex_unlock(&SERVICE_DATA.server_list_mutex);
 	}
+	pthread_mutex_unlock(&SERVICE_DATA.server_list_mutex);
 }
 
 

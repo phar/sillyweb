@@ -7,6 +7,7 @@
 
 
 typedef struct service_data_t{
+	int		active;
 	SSL_CTX			 * sslctx;
 	struct client_reputation *rep_head;
 	struct server_t * serverhead;

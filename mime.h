@@ -9,7 +9,7 @@ struct mime_list{
 };
 
 
-struct mime_list MIME_LIST[];
+extern struct mime_list MIME_LIST[];
 
 char * get_mime_from_filename(char * filename);
 #endif
